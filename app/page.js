@@ -1,17 +1,39 @@
 'use client'
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
 
-  const [ pokemons, alteraPokemons ] = useState([]);
-  const [ pesquisa, alteraPesquisa ] = useState("");
+    const [ pokemons, alteraPokemons ] = useState([]);
+    const [ pesquisa, alteraPesquisa ] = useState("");
 
-  async function busca(){
-    const response = await axios.get("https://pokeapi.co/api/v2/pokemon/pikachu")
-    const data = response.data;
-    console.log(data); 
+    const [ erroPesquisa, alteraEroPesquisa ] = useState(false);
+
+    async function busca(){
+
+      try{
+        const response = await axios.get("https://pokeapi.co/api/v2/pokemon/"+pesquisa)
+
+        const data = response.data;
+        alteraPokemons([data])
+        alteraEroPesquisa(false)
+      }catch(e){
+        alteraEroPesquisa(true);
+      }
+
   }
+
+
+    async function buscaTodos(){
+      const response = await axios.get("https://pokeapi.co/api/v2/pokemon/")
+      const data = response.data.results;
+      alteraPokemons(data)
+      console.log(response)
+    }
+
+    useEffect( ()=> {
+      buscaTodos();
+    }, [] )
 
     return (
       <div>
@@ -19,15 +41,32 @@ export default function Home() {
         <h1>Pokedex</h1>
 
         <p>Digite o nome de um Pokémon</p>
-        <input/>
+        <input onChange={ (e)=> alteraPesquisa(e.target.value) }/>
         <br/>
         <button onClick={ ()=> busca() }>Pesquisar</button>
 
+        {
+          erroPesquisa == true && <p className="text-red-500">Erro ao pesquisar</p>
+        }
+
         <hr/>
 
-        <h2>Nome</h2>
-        <p><strong> ID: </strong> ?? </p>
-        <img src=""/>
+        {
+          pokemons == 0 ?
+            <p>Aguardando...</p>
+
+          :
+            
+            pokemons.map( (i, index ) =>
+                <div>
+                  <h2>{[i.name]}</h2>
+                  <p><strong>ID: </strong> { i.id ? i.id : index+1} </p>
+                  <img src={"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/"+( i.id ? i.id : index+1)+".gif"} />
+                </div>
+            )
+        }
+
+            
       </div>
     );
   }
